@@ -19,7 +19,7 @@ export const validateFieldN1 = ({ star, square, triangle, circle }) => {
 
     const isStar = propEq("star", 'red');
     const isSquare = propEq("square", 'green');
-    const isWhite = curry((value, realValue) => { return propEq(realValue, value) })("white");
+    const isWhite = curry((value, realValue) =>  propEq(realValue, value))("white");
 
     const isQueenOfSpades = allPass([isStar, isSquare, isWhite("triangle"), isWhite("circle")]);
 
@@ -35,7 +35,7 @@ export const validateFieldN1 = ({ star, square, triangle, circle }) => {
 
 // 2. Как минимум две фигуры зеленые.
 export const validateFieldN2 = ({ star, square, triangle, circle }) => 
-    count(equals("green"), [star, square, triangle, circle ]) >= 2
+    count(equals("green"), [ star, square, triangle, circle ]) >= 2
 
 
 // 3. Количество красных фигур равно кол-ву синих.

@@ -21,6 +21,7 @@ export default class Api {
     }
 
     get = curry((url, params) => {
+        console.log(url, params)
         this.errorCountdown = this.errorCountdown - 1;
 
         if (this.ebableErrors && this.errorCountdown === 0) {
@@ -44,7 +45,9 @@ export default class Api {
         
                 if (!this.whiteListHost.some(allowedHost => allowedHost === host)) {
                     reject('Доступны только хосты "api.tech" и "animals.tech"');
-                 }
+                }
+
+                console.log(host, pathname, query);
         
                 switch(host) {
                     case 'api.tech':
@@ -62,6 +65,7 @@ export default class Api {
 
                         break;
                     case 'animals.tech':
+                        console.log("Пришел за животным")
                         const animalId = Number(pathname.slice(1))
                         
                         if (Number.isNaN(animalId)) {

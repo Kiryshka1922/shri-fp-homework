@@ -14,38 +14,71 @@
  * Иногда промисы от API будут приходить в состояние rejected, (прямо как и API в реальной жизни)
  * Ответ будет приходить в поле {result}
  */
- import Api from '../tools/api';
+import Api from '../tools/api';
+import {
+    compose, __, allPass, gt, lt, length, test,
+    andThen,
+    otherwise,
+} from 'ramda';
 
- const api = new Api();
+const api = new Api();
 
- /**
-  * Я – пример, удали меня
-  */
- const wait = time => new Promise(resolve => {
-     setTimeout(resolve, time);
- })
+const isValidNumber = allPass([
+    test(/^[0-9.]+$/),
+    compose(gt(__, 2), length),
+    compose(lt(__, 10), length),
+    compose(gt(__, 0), parseFloat)
+]);
 
- const processSequence = ({value, writeLog, handleSuccess, handleError}) => {
-     /**
-      * Я – пример, удали меня
-      */
-     writeLog(value);
+const processSequence = ({ value, writeLog, handleSuccess, handleError }) => {
+    const roundValue = (value) => Math.round(parseFloat(value));
+    const error = (obj) => {
+        if (obj.status && obj.status !== "STOP"){
+            handleError(obj.message);
+            return Promise.reject({status: "STOP"});
+        }
+        else{
+            return;
+        }
+    };
+    const write = (val = value) => { writeLog(val); return val }
+    
+    const request_1 = (roundedValue) => api.get('https://api.tech/numbers/base', {
+        from: 10,
+        to: 2,
+        number: roundedValue
+    });
+    
+    const request_2 = (roundedValue) => {
+        console.log(roundedValue)
+        return api.get(`https://animals.tech/${roundedValue}`, {})
+    };
 
-     api.get('https://api.tech/numbers/base', {from: 2, to: 10, number: '01011010101'}).then(({result}) => {
-         writeLog(result);
-     });
+    const comp = compose(
+        otherwise(error),
+        andThen(({result}) => {
+            handleSuccess(result);
+        }),
+        andThen(request_2),
+        andThen(squared => write(squared % 3)),
+        andThen(length => write(length ** 2)),
+        andThen(result => write(result.length)),
+        otherwise((err) => error({message: err, status:"continue"})),
+        andThen(({result}) => write(result)),
+        request_1,
+        write,
+        roundValue,
+    );
 
-     wait(2500).then(() => {
-         writeLog('SecondLog')
+    write();
 
-         return wait(1500);
-     }).then(() => {
-         writeLog('ThirdLog');
-
-         return wait(400);
-     }).then(() => {
-         handleSuccess('Done');
-     });
- }
+    if (isValidNumber(value)) {
+        comp(value);
+    }
+    else{
+        handleError("ValidationError");
+        return;
+    }
+};
 
 export default processSequence;
